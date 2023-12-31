@@ -37,6 +37,8 @@ PAGE_GRAPH = "y"
 SIDEBAR_COLLAPSED = ""
 # (Optional, default blank) Additional footer content.
 FOOTER = ""
+# (Optional, default blank) sub-directory to start from
+SUBDIR_START = "Blog"
 # (Optional, default main) Root section name.
 ROOT_SECTION_NAME = "main"
 # (Optional) visjs graph options. Can remove if desired.

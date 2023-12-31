@@ -60,6 +60,10 @@ Whether to use standard Markdown strict line breaks (single line breaks ignored 
 ### `SIDEBAR_COLLAPSED`
 Whether sidebar sections should be collapsed by default. Default: "".
 
+### `SUBDIR_START`
+The starting subdirectory to parse. If this variable is not empty, it is passed to obsidian-exporter as `--subdir-start`. For example, if you have a subdirectory `Vault/Notes` and pass that as an argument, then only that subdirectory and its children will be parsed. Default: "".
+
+
 ## Animations
 `Animate.css`, `Hover.css` and `CSShake` classes can be used in all fields where HTML + CSS are supported. Refer to example repo's setup on how to do so.
 

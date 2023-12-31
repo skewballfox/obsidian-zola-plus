@@ -5,7 +5,6 @@ import re
 import shutil
 from dataclasses import dataclass
 from datetime import datetime
-from distutils.util import strtobool
 from inspect import getmembers, isfunction
 from os import environ
 from pathlib import Path
@@ -28,9 +27,12 @@ docs_dir = site_dir / "content/docs"
 #                                 General Utils                                #
 # ---------------------------------------------------------------------------- #
 
+
 def to_prerender_links(links: List[str]) -> str:
     """Converts links to prerender links"""
-    x = ''.join([f'<link rel="prerender" href="{link}" as="document"/>\n' for link in links])
+    x = "".join(
+        [f'<link rel="prerender" href="{link}" as="document"/>\n' for link in links]
+    )
     print(x)
     return x
 
@@ -46,13 +48,21 @@ def convert_metadata_to_html(metadata: dict) -> str:
 
     for metadata_key in metadata:
         if metadata_key.lower() in [name for name, _ in handlers]:
-            func = [func for name, func in handlers if name.lower() == metadata_key.lower()][0]
-            parsed_metadata += str(func(metadata[metadata_key])).strip().replace("\n", " ") + "\n"
+            func = [
+                func for name, func in handlers if name.lower() == metadata_key.lower()
+            ][0]
+            parsed_metadata += (
+                str(func(metadata[metadata_key])).strip().replace("\n", " ") + "\n"
+            )
     return parsed_metadata
 
 
 def get_metadata_handlers():
-    return [(name, func) for name, func in getmembers(metadata_handlers, isfunction) if not name.startswith("_")]
+    return [
+        (name, func)
+        for name, func in getmembers(metadata_handlers, isfunction)
+        if not name.startswith("_")
+    ]
 
 
 # print(convert_metadata_to_html({"modified": "2021-07-01 12:00:00", "tags": ["tag1", "tag2"], "button": "button1",
@@ -64,12 +74,19 @@ def slugify_path(path: Union[str, Path], no_suffix: bool, lowercase=False) -> Pa
     path = Path(str(path))  # .lower()
     if Settings.is_true("SLUGIFY"):
         if no_suffix:
-            os_path = "/".join(slugify(item, lowercase=lowercase) for item in path.parts)
+            os_path = "/".join(
+                slugify(item, lowercase=lowercase) for item in path.parts
+            )
             name = ""
             suffix = ""
         else:
-            os_path = "/".join(slugify(item, lowercase=lowercase) for item in str(path.parent).split("/"))
-            name = ".".join(slugify(item, lowercase=lowercase) for item in path.stem.split("."))
+            os_path = "/".join(
+                slugify(item, lowercase=lowercase)
+                for item in str(path.parent).split("/")
+            )
+            name = ".".join(
+                slugify(item, lowercase=lowercase) for item in path.stem.split(".")
+            )
             suffix = path.suffix
 
         if name != "" and suffix != "":
@@ -148,7 +165,7 @@ class DocLink:
                 .resolve()
                 .relative_to(docs_dir)
             )
-            new_rel_path = quote(str(slugify_path(new_rel_path, False)))
+            new_rel_path = quote(str(slugify_path(new_rel_path, False)))  # type: ignore
 
             return f"/docs/{new_rel_path}"
         except Exception:
@@ -197,7 +214,7 @@ class DocPath:
         if self.is_md and (self.old_path.parent / self.old_path.stem).is_dir():
             print(f"Name collision with sibling folder, renaming: {self.old_rel_path}")
             new_rel_path = self.old_rel_path.parent / (
-                    self.old_rel_path.stem + "-nested" + self.old_rel_path.suffix
+                self.old_rel_path.stem + "-nested" + self.old_rel_path.suffix
             )
 
         self.new_rel_path = slugify_path(new_rel_path, not self.is_file)
@@ -221,10 +238,10 @@ class DocPath:
         """Gets the title of the section."""
         sidebar = str(self.old_rel_path)
         assert Settings.options["SUBSECTION_SYMBOL"] is not None
-        section_symbol = Settings.options["SUBSECTION_SYMBOL"] if sidebar.count("/") > 0 else ""
-        sidebar = (
-                      section_symbol
-                  ) + sidebar.split("/")[-1]
+        section_symbol = (
+            Settings.options["SUBSECTION_SYMBOL"] if sidebar.count("/") > 0 else ""
+        )
+        sidebar = (section_symbol) + sidebar.split("/")[-1]
 
         print("sidebar", sidebar)
         return (
@@ -252,8 +269,9 @@ class DocPath:
         # The replacement might not be necessary, filenames cannot contain double quotes
         title = " ".join(
             [
-                #item if item[0].isupper() else item.title()
-                item for item in self.old_path.stem.split(" ")
+                # item if item[0].isupper() else item.title()
+                item
+                for item in self.old_path.stem.split(" ")
             ]
         ).replace('"', r"\"")
         return title
@@ -277,7 +295,7 @@ class DocPath:
                 # find the end of the front matter
                 for i, line in enumerate(lines[1:]):
                     if line.startswith("---"):
-                        return lines[i + 2:]
+                        return lines[i + 2 :]
             return lines
         # return [line for line in open(self.old_path, "r").readlines()]
 
@@ -297,8 +315,9 @@ class DocPath:
                 # find the end of the front matter
                 for i, line in enumerate(lines[1:]):
                     if line.startswith("---"):
-                        return yaml.load("".join(lines[1:i + 1]),
-                                         Loader=yaml.FullLoader)  # using yaml lib called pyyaml
+                        return yaml.load(
+                            "".join(lines[1 : i + 1]), Loader=yaml.FullLoader
+                        )  # using yaml lib called pyyaml
             return {}
         # return [line for line in open(self.old_path, "r").readlines()]
 
@@ -332,12 +351,17 @@ class DocPath:
 
     def edge(self, other: str) -> Tuple[str, str]:
         """Gets an edge from page's URL to another URL."""
-        return tuple(sorted([self.abs_url, other]))
+        return tuple(sorted([self.abs_url, other]))  # type: ignore
 
 
 # ---------------------------------------------------------------------------- #
 #                                   Settings                                   #
 # ---------------------------------------------------------------------------- #
+
+__str_true = CaseInsensitiveDict(
+    {"y": True, "yes": True, "true": True, "t": True, "1": True}
+)
+"""dict of values that evaluate to True, as match statements won't work in python versions < 3.10"""
 
 
 class Settings:
@@ -352,31 +376,31 @@ class Settings:
 
     # Default options
     options: Dict[str, Optional[str]] = {
-        "SITE_URL"             : None,
-        "SITE_TITLE"           : "Someone's Second 🧠",
-        "TIMEZONE"             : "Asia/Hong_Kong",
-        "REPO_URL"             : None,
-        "LANDING_PAGE"         : None,
-        "LANDING_TITLE"        : "I love obsidian-zola! 💖",
-        "SITE_TITLE_TAB"       : "",
-        "LANDING_DESCRIPTION"  : "I have nothing but intelligence.",
-        "LANDING_BUTTON"       : "Click to steal some👆",
-        "SORT_BY"              : "title",
-        "GANALYTICS"           : "",
-        "SLUGIFY"              : "y",
-        "HOME_GRAPH"           : "y",
-        "PAGE_GRAPH"           : "y",
-        "SUBSECTION_SYMBOL"    : "<div class='folder'><svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><path d='M448 96h-172.1L226.7 50.75C214.7 38.74 198.5 32 181.5 32H64C28.65 32 0 60.66 0 96v320c0 35.34 28.65 64 64 64h384c35.35 0 64-28.66 64-64V160C512 124.7 483.3 96 448 96zM64 80h117.5c4.273 0 8.293 1.664 11.31 4.688L256 144h192c8.822 0 16 7.176 16 16v32h-416V96C48 87.18 55.18 80 64 80zM448 432H64c-8.822 0-16-7.176-16-16V240h416V416C464 424.8 456.8 432 448 432z' /></svg></div>",
-        "LOCAL_GRAPH"          : "",
-        "GRAPH_LINK_REPLACE"   : "",
-        "STRICT_LINE_BREAKS"   : "",
-        "SIDEBAR_COLLAPSED"    : "",
-        "FOOTER"               : "",
-        "ROOT_SECTION_NAME"    : "main",
-        "COMMENTS_GISCUSS"     : "",
-        "EDIT_PAGE"            : "",
+        "SITE_URL": None,
+        "SITE_TITLE": "Someone's Second 🧠",
+        "TIMEZONE": "Asia/Hong_Kong",
+        "REPO_URL": None,
+        "LANDING_PAGE": None,
+        "LANDING_TITLE": "I love obsidian-zola! 💖",
+        "SITE_TITLE_TAB": "",
+        "LANDING_DESCRIPTION": "I have nothing but intelligence.",
+        "LANDING_BUTTON": "Click to steal some👆",
+        "SORT_BY": "title",
+        "GANALYTICS": "",
+        "SLUGIFY": "y",
+        "HOME_GRAPH": "y",
+        "PAGE_GRAPH": "y",
+        "SUBSECTION_SYMBOL": "<div class='folder'><svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><path d='M448 96h-172.1L226.7 50.75C214.7 38.74 198.5 32 181.5 32H64C28.65 32 0 60.66 0 96v320c0 35.34 28.65 64 64 64h384c35.35 0 64-28.66 64-64V160C512 124.7 483.3 96 448 96zM64 80h117.5c4.273 0 8.293 1.664 11.31 4.688L256 144h192c8.822 0 16 7.176 16 16v32h-416V96C48 87.18 55.18 80 64 80zM448 432H64c-8.822 0-16-7.176-16-16V240h416V416C464 424.8 456.8 432 448 432z' /></svg></div>",
+        "LOCAL_GRAPH": "",
+        "GRAPH_LINK_REPLACE": "",
+        "STRICT_LINE_BREAKS": "",
+        "SIDEBAR_COLLAPSED": "",
+        "FOOTER": "",
+        "ROOT_SECTION_NAME": "main",
+        "COMMENTS_GISCUSS": "",
+        "EDIT_PAGE": "",
         "EDIT_PAGE_BUTTON_TEXT": "Edit this page on Github",
-        "GRAPH_OPTIONS"        : """
+        "GRAPH_OPTIONS": """
         {
         	nodes: {
         		shape: "dot",
@@ -415,8 +439,13 @@ class Settings:
     @classmethod
     def is_true(cls, key: str) -> bool:
         """Returns whether an option's string value is true."""
-        val = cls.options[key]
-        return bool(strtobool(val)) if val else False
+        val = cls.options[key] or ""  # so that it will shut up about NoneType
+        return __str_true[val] if val in __str_true else False
+        # match val:
+        #     case "y" | "yes" | "true" | "t" | "1":
+        #         return True
+        #     case _:
+        #         return False
 
     @classmethod
     def parse_env(cls):
@@ -425,11 +454,11 @@ class Settings:
         """
 
         for key in cls.options.keys():
-            required = cls.options[key] is None
-
             if key in environ:
                 cls.options[key] = environ[key]
             else:
+                required = cls.options[key] is None
+
                 if required:
                     raise Exception(f"FATAL ERROR: build.environment.{key} not set!")
         if cls.options["SITE_TITLE_TAB"] == "":
@@ -509,27 +538,29 @@ def parse_graph(nodes: Dict[str, str], edges: List[Tuple[str, str]]):
         edge_counts[j] += 1
 
     # Node category if more than 2 nested level, take sub folder
-    node_categories = set([key.split("/")[2 if key.count("/") < 5 else 3] for key in nodes.keys()])
+    node_categories = set(
+        [key.split("/")[2 if key.count("/") < 5 else 3] for key in nodes.keys()]
+    )
 
     # Choose the most connected nodes to be colored
     top_nodes = {
         node_url: i
-        for i, node_url in enumerate(
-            list(node_categories)[: len(PASTEL_COLORS)]
-        )
+        for i, node_url in enumerate(list(node_categories)[: len(PASTEL_COLORS)])
     }
 
     # Generate graph data
     graph_info = {
         "nodes": [
             {
-                "id"     : node_ids[url],
-                "label"  : title,
-                "url"    : url,
-                "color"  : PASTEL_COLORS[top_nodes[url.split("/")[2 if url.count("/") < 5 else 3]]] if url.split("/")[
-                                                                                                           2 if url.count(
-                                                                                                               "/") < 5 else 3] in top_nodes else None,
-                "value"  : math.log10(edge_counts[url] + 1) + 1,
+                "id": node_ids[url],
+                "label": title,
+                "url": url,
+                "color": PASTEL_COLORS[
+                    top_nodes[url.split("/")[2 if url.count("/") < 5 else 3]]
+                ]
+                if url.split("/")[2 if url.count("/") < 5 else 3] in top_nodes
+                else None,
+                "value": math.log10(edge_counts[url] + 1) + 1,
                 "opacity": 0.1,
             }
             for url, title in nodes.items()
@@ -540,7 +571,7 @@ def parse_graph(nodes: Dict[str, str], edges: List[Tuple[str, str]]):
             if edge[0] in node_ids and edge[1] in node_ids
         ],
     }
-    graph_info = json.dumps(graph_info)
+    graph_info = json.dumps(graph_info)  # type: ignore
 
     with open(site_dir / "static/js/graph_info.js", "w") as f:
         is_local = "true" if Settings.is_true("LOCAL_GRAPH") else "false"

@@ -9,13 +9,19 @@ echo "netlify.toml" >>__obsidian/.gitignore
 rsync -a __site/zola/ __site/build
 rsync -a __site/content/ __site/build/content
 
+export_args=()
+if [ -z "$STRICT_LINE_BREAKS" ] || [[ $STRICT_LINE_BREAKS == @("y"| "yes" | "true" | "1") ]]; then
+	export_args+=(--hard-linebreaks)
+fi
+if [ ! -z "$SUBDIR_START" ]; then
+	echo $SUBDIR_START
+	export_args+=(--start-at $SUBDIR_START)
+fi
+
 # Use obsidian-export to export markdown content from obsidian
 mkdir -p __site/build/content/docs __site/build/__docs
-if [ -z "$STRICT_LINE_BREAKS" ]; then
-	__site/bin/obsidian-export --hard-linebreaks --no-recursive-embeds __obsidian __site/build/__docs
-else
-	__site/bin/obsidian-export --hard-linebreaks --no-recursive-embeds __obsidian __site/build/__docs
-fi
+
+__site/bin/obsidian-export "${export_args[@]}" --no-recursive-embeds __obsidian __site/build/__docs
 
 # Run conversion script
 python __site/convert.py
