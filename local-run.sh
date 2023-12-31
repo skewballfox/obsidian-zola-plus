@@ -77,4 +77,4 @@ bin/obsidian-export --frontmatter=never "${export_args[@]}" --no-recursive-embed
 source env.sh && python convert.py && rm env.sh
 
 # Serve Zola site
-zola --root=build serve >/dev/null 2>&1
+zola --root=build serve >/dev/null
